@@ -1,0 +1,17 @@
+sol: cookie session=' UNION SELECT id, username FROM users WHERE username = 'antonio
+
+La richiesta vulnerabile è /todo, prende il cookie session e dalla funzione db.get_user_from_session ottiene l'utente di cui visualizzare le
+tasks, nel dettaglio la funzione get_user_from_session è anche l'unica funzione che non sanitizza l'input per evitare sql-Injection. 
+
+Nella funzione setup del db viene inserito l'utente con username antonio (che non ha una password, anche se non è utile al caso) e nelle sue tasks viene inserita la flag, sapendo
+che la funzione che si occupa di ottenere lo username dell'utente di cui vedere le tasks è vulnerabile a sql-Injection capiamo subito che questa è la strada giusta.
+
+La query eseguita da get_user_from_session è la seguente: 
+        cursor.execute(
+            """SELECT users.id, users.username
+            FROM users
+            JOIN sessions ON users.id = sessions.user_id
+            WHERE sessions.id = '%s';""" % (session_id,))
+
+L'unica sql-Injection applicabile in questo caso è una UNION sql-Injection, per via del JOIN che non permette di utilizzare una semplice Injection logica del tipo: ' OR users.username = 'antonio
+Sfruttiamo quindi la query per ottenere nulla dalla prima query, mentre dalla UNION query otteniamo una sola row con i dati di antonio, al template viene quindi passato lo username antonio e carica le sue tasks.

@@ -1,0 +1,12 @@
+il problema in questa challenge è stato trovare l'indirizzo in cui viene
+salvato il pointer alla stringa che contiene la password, per farlo ho 
+trovato 2 modi:
+- seguendo con next instruction (ni) ho visto che nella malloc veiva ritornato
+l'indirizzo della stringa della password, perciò con x/gs <indirizzo> ho trovato
+la password;
+- usando disassemble guess ho trovato l'indirizzo dell'istruzione in cui viene
+ritornato l'indirizzo della stringa contenente la password dopo la malloc ed
+inserendo un breakpoint qui è possibile leggere il contenuto di rax, cioè
+l'indirizzo della password che era stato ritornato dalla funzione getPass 
+in cui veniva eseguita la malloc, e utilizzando sempre x/gs <indirizzo> ho 
+ottenuto la password.

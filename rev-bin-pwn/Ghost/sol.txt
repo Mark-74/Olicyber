@@ -1,0 +1,2 @@
+con gdb si mette un breakpoint prima di printf e si guarda la posizione 0x404200
+sol: x/100cb 0x404200

@@ -1,0 +1,8 @@
+questo binario non sembra fare molto, anche con strace si può vedere che non si limita a fare dei puts, decompilando e disassemblando con ghidra si può notare che nel main viene confrontato
+il numero degli argomenti (argv) con 0x1337, cioè 4919 in decimale, ed in quel caso avrebbe ritornato l'indirizzo di una gif. andando quindi all'indirizzo citato si potrà salvare con ghidra
+la gif, analizzarla frame per frame e ottenere la flag.
+
+IMPORTANTE
+in c, i parametri del main sono: param1: 
+int - argv, numero degli argomenti, es. (./belandi    argv = 1     ./belandi 1    argv = 2)
+char** - argc, array di stringhe che sono i parametri effettivi

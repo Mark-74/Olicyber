@@ -1,0 +1,8 @@
+services:
+  todo:
+    build: .
+    restart: unless-stopped
+    environment:
+      WEB_DOM: todo:5000
+    ports:
+      - '5000:80'

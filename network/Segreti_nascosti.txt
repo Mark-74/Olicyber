@@ -1,0 +1,3 @@
+Dal file .pcap è possibile notare una serie di 4 richieste post a /upload di cui solo una va a buon fine, a questo punto si può estrarre il file inviato in questa richiesta estraendo i byte del pacchetto, indicazioni qui: https://ask.wireshark.org/question/22187/how-could-i-potentially-export-the-actual-binary-file-from-a-post-request/
+Attenzione: non è possibile estrarre il file dall'estrattore di oggetti http, è necessario estrarre direttamente i byte del pacchetto.
+Il risultato dell'estrazione sarà un file zippato che estratto sarà la flag.

@@ -1,0 +1,8 @@
+In questa challenge viene proposta una pagina da cui si può accedere a diversi
+nft tramite parametro nell'url, è anche presente una scritta "decentralizzato" 
+che è stata cancellata in favore di server, che suggerisce che tutto è salvato
+lì (path traversal). nel javascript però è presente un check di ogni char del 
+percorso che viene mandato in input, negando ogni punto con un ===. Per risolverla
+è bastato mandare un array (nft?id[]=flag.txt) che passerà il controllo del
+javascript e permetterà il path traversal.
+

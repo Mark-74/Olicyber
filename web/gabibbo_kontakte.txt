@@ -1,0 +1,1 @@
+mongodb è un nosql database, perciò nella richista di /posts in cui nel payload viene inserito lo username e nel backend viene usato per una query si può mandare {"username":{"$ne":""}}, che quando viene mandato nella query torna tutte le righe che hanno come username una stringa non vuota, quindi tutti admin incluso ed il contenuto del suo post che è la flag.

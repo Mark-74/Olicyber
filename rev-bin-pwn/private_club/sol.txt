@@ -1,0 +1,5 @@
+Decompilando il binario con ida si nota che viene utilizato un char come
+controllo per far accedere l'utente o meno, al momento della richiesta del
+nome si possono inserire abbastanza char da modificare il valore del char
+di controllo, a questo punto ci da l'accesso ad un cmd e da qui si scopre
+che c'è un file flag.txt con ls, quindi cat flag.txt.

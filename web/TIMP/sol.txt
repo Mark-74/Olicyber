@@ -1,0 +1,8 @@
+In questa challenge viene proposto un cmd in cui è possibile eseguire comandi,
+come si può vedere però nell'handler.php i comandi vengono filtrati e non è 
+possibile all'apparenza eseguire comandi utili.
+Una delle soluzioni possibili è stata utilizzare il cowsay pereseguire comandi
+normalmente non possibili, utlizzando infatti una stringa formatta in bash è 
+possibile fargli eseguire comandi il cui output verrà mostrato nella 
+finestra di cowsay. es. cowsay "$(cat /flag.txt)"
+

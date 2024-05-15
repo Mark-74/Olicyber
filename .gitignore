@@ -1,0 +1,8 @@
+*
+!*.*
+!*/
+
+sherlock/
+pwndbg/
+*.pcap*
+rockyou.txt
