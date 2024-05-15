@@ -6,3 +6,4 @@ sherlock/
 pwndbg/
 *.pcap*
 rockyou.txt
+.vscode
