@@ -7,3 +7,4 @@ pwndbg/
 *.pcap*
 rockyou.txt
 .vscode
+.gdb_history
