@@ -1,0 +1,48 @@
+<%- include('header') -%>
+
+<div class="container col-md-8 mt-2 text-center">
+
+
+    <form class="my-2">
+        <button class="btn btn-<%= type == 'cinema' ? '' : 'outline-' %>primary" name="filter" value="cinema"
+            type="submit">Cinema</button>
+        <button class="btn btn-<%= type == 'tv' ? '' : 'outline-' %>primary" name="filter" value="tv"
+            type="submit">TV</button>
+        <button class="btn btn-<%= type == 'musica' ? '' : 'outline-' %>primary" name="filter" value="musica"
+            type="submit">Musica</button>
+        <button class="btn btn-outline-primary" name="filter" value="secret" type="submit" disabled>Secret</button>
+    </form>
+
+
+    <% if (data.length !== 0){ 
+        const cols = Object.keys(data[0])
+        %>
+
+    <table class="table">
+        <thead>
+            <tr>
+
+                <% for (const c of cols){ %>
+                <th scope="col"><%= c %></th>
+                <% } %>
+            </tr>
+        </thead>
+
+        <tbody>
+            <% for (const d of data){ %>
+            <tr>
+                <% for (const c of cols){ %>
+                <td><%= d[c] %></td>
+                <% } %>
+            </tr>
+            <% } %>
+
+        </tbody>
+
+
+
+        <% } %>
+    </table>
+
+</div>
+<%- include('footer') -%>

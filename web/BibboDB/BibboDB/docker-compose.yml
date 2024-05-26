@@ -1,0 +1,15 @@
+services:
+  db:
+    image: mongo:5.0
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: REDACTED
+      MONGO_INITDB_DATABASE: db
+    volumes:
+      - ./db/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+  webapp:
+    build: ./server
+    ports:
+      - 127.0.0.1:3000:3000
+    depends_on:
+      - db

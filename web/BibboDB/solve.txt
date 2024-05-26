@@ -1,0 +1,25 @@
+La vulnerabilità sfruttata si chiama NoSQL injection.
+
+    Contesto:
+        Il server estrae un parametro filter dalla query string.
+        Se filter contiene "secret", restituisce dati riservati (FLAG).
+        Altrimenti, esegue una query sul database per i documenti con il campo type uguale a filter.
+
+    Vulnerabilità:
+        MongoDB permette l'uso di operatori come $regex e $eq nelle query, che possono essere iniettati tramite il parametro filter.
+
+    Exploits:
+        Iniezione con $regex:
+            URL: http://bibbodb.challs.olicyber.it/type?filter[$regex]=secret
+            L'operatore $regex fa sì che la query cerchi qualsiasi documento con type contenente "secret".
+        Iniezione con $eq:
+            URL: http://bibbodb.challs.olicyber.it/type?filter[$eq]=secret
+            L'operatore $eq cerca documenti dove type è uguale alla stringa secret, aggirando il controllo "secret".
+
+    Risultato:
+        Iniettando questi operatori, gli attaccanti possono manipolare la query per accedere a dati riservati senza conoscere il valore esatto richiesto dalla logica
+        dell'applicazione.
+
+	Conclusione:
+	Questo metodo sfrutta la sanitizzazione inadeguata degli input del server, permettendo agli attaccanti di alterare la logica delle query al database e
+	recuperare la Flag.

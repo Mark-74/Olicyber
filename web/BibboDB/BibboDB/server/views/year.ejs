@@ -1,0 +1,49 @@
+<%- include('header') -%>
+
+<div class="container col-md-8 mt-2 text-center">
+
+
+    <form class="my-2">
+        <button class="btn btn-outline-primary" name="filter" value="1337" type="submit" disabled>1337</button>
+        <% for (const y of [1990,1991,1992,1995,1996,1998,1999,2000,2002,2003,2006,2007,2008,2011,2013]){ %>
+        <button class="btn btn-<%= year == y ? '' : 'outline-' %>primary" name="filter" value="<%= y %>"
+            type="submit"><%= y %></button>
+        <% } %>
+    </form>
+
+
+    <% if (data.length !== 0){ 
+        const cols = new Set()
+        for (const d of data){
+            Object.keys(d).forEach(c => cols.add(c))
+        }
+        %>
+
+    <table class="table">
+        <thead>
+            <tr>
+
+                <% for (const c of cols){ %>
+                <th scope="col"><%= c %></th>
+                <% } %>
+            </tr>
+        </thead>
+
+        <tbody>
+            <% for (const d of data){ %>
+            <tr>
+                <% for (const c of cols){ %>
+                <td><%= d[c] %></td>
+                <% } %>
+            </tr>
+            <% } %>
+
+        </tbody>
+
+
+
+        <% } %>
+    </table>
+
+</div>
+<%- include('footer') -%>
