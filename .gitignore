@@ -2,6 +2,7 @@
 !*.*
 !*/
 
+*.prg
 sherlock/
 pwndbg/
 *.pcap*
