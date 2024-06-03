@@ -2,6 +2,7 @@
 !*.*
 !*/
 
+project.rep
 *.prg
 sherlock/
 pwndbg/
