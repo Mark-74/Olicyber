@@ -1,0 +1,18 @@
+version: "3"
+
+services:
+  pincode_flask:
+    build: .
+    container_name: pincode_flask
+    privileged: false
+    restart: unless-stopped
+    environment:
+      - FLAG=flag{REDATTO}
+
+  pincode_nginx:
+    image: nginx
+    container_name: pincode_nginx
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+    ports:
+      - "34007:80"

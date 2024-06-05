@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" rel="stylesheet" />
+    <!-- MDB -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/6.1.0/mdb.min.css" rel="stylesheet" />
+
+    <title>Pincode</title>
+
+    <style>
+        body {
+            background-color: #8ecae6;
+        }
+
+        .cell {
+            width: 60px;
+            font-size: 50px;
+            height: 90px;
+            display: inline;
+            margin: 10px 10px;
+            text-align: center;
+        }
+
+        .my_row {
+            width: auto;
+            margin: auto;
+        }
+
+        .digit {
+            border: none;
+            margin: 10px 15px;
+            width: 80px;
+            background-color: #023047;
+            color: white;
+        }
+
+        .main {
+            margin: auto;
+        }
+    </style>
+</head>
+
+<body class="vh-100 d-flex flex-column">
+
+    <div class="container main">
+
+        <div class="row">
+            <div class="my_row">
+                <input type="text" name="" name="pincode" id="pincode_0" class="cell" disabled>
+                <input type="text" name="" name="pincode" id="pincode_1" class="cell" disabled>
+                <input type="text" name="" name="pincode" id="pincode_2" class="cell" disabled>
+                <input type="text" name="" name="pincode" id="pincode_3" class="cell" disabled>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="my_row">
+                <button class="cell digit" onclick="add_digit('1')">1</button>
+                <button class="cell digit" onclick="add_digit('2')">2</button>
+                <button class="cell digit" onclick="add_digit('3')">3</button>
+            </div>
+        </div>
+        <div class="row">
+            <div class="my_row">
+                <button class="cell digit" onclick="add_digit('4')">4</button>
+                <button class="cell digit" onclick="add_digit('5')">5</button>
+                <button class="cell digit" onclick="add_digit('6')">6</button>
+            </div>
+        </div>
+        <div class="row">
+            <div class="my_row">
+                <button class="cell digit" onclick="add_digit('7')">7</button>
+                <button class="cell digit" onclick="add_digit('8')">8</button>
+                <button class="cell digit" onclick="add_digit('9')">9</button>
+            </div>
+        </div>
+        <div class="row">
+            <div class="my_row">
+                <button class="cell digit" onclick="add_digit('0')">0</button>
+            </div>
+        </div>
+
+        {% if error %}
+        <div class="row">
+            <div class="alert alert-danger my_row" role="alert">
+                {{error}}
+            </div>
+        </div>
+        {% endif %}
+
+        {% if FLAG %}
+        <div class="row">
+            <div class="alert alert-success my_row" role="alert">
+                {{FLAG}}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+
+    <form action="/" method="POST" id="form">
+        <input type="hidden" name="pincode" id="pincode_input">
+    </form>
+
+    <script>
+        let code = "";
+
+        const add_digit = (digit) => {
+            let current_digit = code.length;
+            code += digit;
+
+            let kek = document.getElementById(`pincode_${current_digit}`).value = digit;
+
+            if (code.length == 4) {
+                submit()
+            }
+        };
+
+        const submit = () => {
+            document.getElementById('pincode_input').value = code;
+            document.getElementById('form').submit();
+        };
+    </script>
+
+    <!-- MDB -->
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/6.1.0/mdb.min.js"></script>
+</body>
+
+</html>
