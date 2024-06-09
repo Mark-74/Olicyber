@@ -1,0 +1,31 @@
+services:
+  nginx:
+    image: nginx:1.19-alpine
+    ports:
+      - "38100:5000"
+    environment:
+      PHP_HOST: php-fpm
+    volumes:
+      - ./nginx.conf:/etc/nginx/templates/default.conf.template:ro
+      - ./src:/var/www/html:ro
+    restart: unless-stopped
+    
+  php-fpm:
+    build: .
+    environment:
+      MYSQL_HOST: db
+      MYSQL_DATABASE: not_phishing
+      MYSQL_ROOT_PASSWORD: password
+      FLAG: flag{placeholder}
+      MAIL_TOKEN: mail_token
+      MAIL_HOST: fakemail
+    restart: unless-stopped
+
+  db:
+    image: mysql
+    volumes:
+      - ./db:/docker-entrypoint-initdb.d/:ro
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: not_phishing
+    restart: unless-stopped
