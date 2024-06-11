@@ -3,7 +3,7 @@ import random
 
 for i in range(256):
     random.seed(i)
-    image = Image.open('output.bin')
+    image = Image.open('../output.bin')
     for x in range(image.width):
         for y in range(image.height):
             p = image.getpixel((x,y))
