@@ -1,0 +1,3 @@
+upload file e poi renderizzo tramite l'url: http://shellrevenge2.challs.olicyber.it/index.php?page=uploads/0cc63c7ea9ec4331ecd39a6d628ddbe6/temp.php
+
+la differenza tra questa challenge e la precedente è che in quella prima il contenuto del file php veniva incluso direttamente dal backend ed eseguito, in questa invece è necessario indicare manualmente al backend di renderizzare il nostro file inserito nell'url come opzione pagina (page?=...)
