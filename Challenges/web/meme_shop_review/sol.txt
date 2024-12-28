@@ -1,0 +1,7 @@
+La differenza tra questa challenge e la versione base è che vengono aggiunti 2 nuovi endpoint: refund.php e report.php.
+La pagina refund permette solo agli admin di inviare soldi agli utenti, mentre quella di report ci permette di inviare un url che l'admin visiterà.
+L'idea principale è quindi quella di far fare una richiesta post a refund.php dall'admin con il nostro utente come destinatario, ma il server fa solo richieste get.
+Notiamo però che nelle richieste a refund.php non ci sono csrf token, quindi essere limitati ad una richiesta get non è più un problema:
+Da webhook.site creo un nuovo webhook con una pagina html che contiene un form con gli stessi campi del form di refund, ma compilati con i nostri dati, e con l'action che punta a http://meme_shop_review.challs.olicyber.it/refund.php, poi un timeout submitta il form dopo che è stato caricato.
+È necessario usare un form, e non una semplice richiesta post, perchè con l'action i cookie che vengono passati sono quelli del dominio a cui punta ed inoltre il form non ha problemi relativi alle richieste cross-origin.
+Invio l'url del webhook all'admin ed ora posso comprare la flag.
