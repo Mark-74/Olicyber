@@ -6,7 +6,7 @@ This repository is a collection of writeups and solutions for various Capture Th
 .
 ├── Olicyber/
 |   ├─ Challenges
-│   |   ├── Category/
+│   |   └── Category/
 │   │       ├── Challenge-Name/
 │   │       │   ├── sol.py or notes
 │   │       │   └── other files  # if present
