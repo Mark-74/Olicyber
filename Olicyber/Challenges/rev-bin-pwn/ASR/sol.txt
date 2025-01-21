@@ -1,0 +1,5 @@
+Il programma legge il nostro input e lo compara a blocchi di 4 char con una stringa di 4 char ottenuta dalla funzione decrypt.
+Con gdb possiamo mettere dei breakpoint all'indirizzo in cui ritorna l'esecuzione dopo aver chiamato decrypt e guardare il contenuto di RAX (registro dove è salvato il valore di ritorno) finchè non ricomponiamo la flag, aggiornando gradualmente il nostro input per far proseguire il programma (al primo blocco di 4 char diverso altrimenti si fermerebbe).
+
+flag{b4d_pr0gr4mm1ng}
+
