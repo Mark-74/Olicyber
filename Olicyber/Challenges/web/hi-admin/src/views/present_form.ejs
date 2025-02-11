@@ -1,0 +1,37 @@
+<%- include('header') -%>
+
+    <div class="container col-lg-4 col-md-6 mt-3 text-center">
+
+        <form id="form">
+            <input class="form-control my-1" type="text" id="name" name="name" placeholder="your name" />
+            <input class="form-control my-1" type="text" id="hobby" name="hobby" placeholder="your favorite hobby" />
+            <input class="form-control my-1" type="text" id="age" name="age" placeholder="your age" />
+            <button class="btn btn-primary mt-1 mb-3" type="submit">Say hi</button>
+        </form>
+
+        <div id="response"></div>
+    </div>
+    <script>
+        document.getElementById('form').addEventListener('submit', (e) => {
+            e.preventDefault()
+
+            let data = {}
+
+            data['name'] = document.getElementById('name').value || undefined
+            data['hobby'] = document.getElementById('hobby').value || undefined
+            data['age'] = parseInt(document.getElementById('name').value) || undefined
+
+            console.log(data)
+            fetch('/hi', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            }).then(r => r.text()
+                .then(r => {
+                    document.getElementById('response').innerHTML = r
+                }))
+        })
+    </script>
+    <%- include('footer') -%>

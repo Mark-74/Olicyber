@@ -1,0 +1,20 @@
+<%- include('header') -%>
+
+    <div class="container col-md-8 mt-2 text-center">
+
+        <h4 class="mt-3">Hi, this is my simple website</h4>
+
+        <br>
+
+        <% if(locals.adminLogged===true){ %>
+
+            <h1>Hi admin! <%= process.env.FLAG || 'flag{test}' %> </h1>
+
+        <% } else{ %>
+            Look around, but no flag for you if you are not the admin
+            <br>
+            However, you can present yourself <a href="/hi">here</a>, just for fun!
+        <% } %>
+        
+    </div>
+<%- include('footer') -%>

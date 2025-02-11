@@ -1,0 +1,15 @@
+
+<br>
+
+<% if(locals.adminLogged===true){ %>
+
+    <h1>I know you! <%= process.env.FLAG || 'flag{test}' %> </h1>
+
+<% } else{ %>
+
+    <h4>Hi <%= user.name %> (<%= user.age %>)!</h4>
+    I love <%= user.hobby %> too!!!
+
+<% } %>
+
+
