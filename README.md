@@ -13,6 +13,13 @@ This repository is a collection of writeups and solutions for various Capture Th
 |   |       └── ...
 │   └── Nazionale 2024
 |
+├── CyberChallenge/
+|   └─ Challenges
+│       └── Category/
+│           ├── Challenge-Name/
+│           │   ├── sol.py or notes
+│           │   └── other files  # if present
+|           └── ...
 ├── Others
 |   ├─ other CTFs
 |   └── ...
