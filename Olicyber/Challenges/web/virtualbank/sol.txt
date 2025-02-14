@@ -1,0 +1,6 @@
+In questa challenge la flag si trova in /history/1 (la prima transazione fatta) e l'admin può visitare qualsiasi url che inseriamo nel campo url di /jobs.
+L'idea quindi è quella di fare un XSS facendo leggere all'admin /history/1 e mandandoci l'output tramite webhook (o in altri modi); il problema però sta nel fatto che le csp e il criterio same-origin non permettono ad una pagina di webhook di fare una richiesta alla pagina /history/1, inoltre per lo stesso motivo (default-src: 'self') non possiamo scrivere codice javascript che non sia importato dal dominio della challenge.
+Per ovviare a questi problemi dobbiamo trovare il modo di far importare del codice javascript dal sito stesso, cercando un endpoint in cui possiamo inserire del javascript che verrà poi importato dalla XSS.
+L'endpoint corretto è /error/?msg=... dove come parametro possiamo inserire un messaggio (url encoded) che verrà renderizzato dalla pagina in modo pulito, senza <!DOCTYPE html> ecc.
+Creo quindi una transazione con causale <script src=".../error/?msg=(sol.js url encoded)"></script>.
+Mando poi l'url relativo alla transazione all'admin e nel webhook ottengo la flag (da url decodare, era necessario encodarla in sol.js perchè sennò nella GET i caratteri speciali terminerebbero l'url della richiesta).
