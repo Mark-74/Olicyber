@@ -1,0 +1,9 @@
+!*
+!*.*
+!*/
+
+project.rep
+*.prg
+*.pcap*
+.vscode
+.gdb_history
