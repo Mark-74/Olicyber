@@ -8,17 +8,16 @@ encrypted_dir = 'encrypted_files'
 decrypted_dir = 'decrypted_files'
 os.makedirs(decrypted_dir, exist_ok=True)
 
-# List all files in the encrypted directory that end with '.enc'
 all_files = [f for f in os.listdir(encrypted_dir) if f.endswith('.enc')]
 
-# Determine the set of base filenames (original filenames) by splitting on the last underscore.
+# Determine the original filenames
 base_names = set()
 for filename in all_files:
     try:
         base, _ = filename.rsplit('_', 1)  # splits into "original_filename" and "XX.enc"
         base_names.add(base)
     except ValueError:
-        # Skip files that don't match the expected pattern.
+        # Skip if don't match
         continue
 
 # For each unique file, search for sequential chunks until one is missing.
