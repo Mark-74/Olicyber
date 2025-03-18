@@ -11,7 +11,8 @@ This repository is a collection of writeups and solutions for various Capture Th
 │   │       │   ├── sol.py or notes
 │   │       │   └── other files  # if present
 |   |       └── ...
-│   └── Nazionale 2024
+│   └── Gare
+│       └─ ...
 |
 ├── CyberChallenge/
 |   └─ Challenges

