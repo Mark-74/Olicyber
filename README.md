@@ -14,13 +14,13 @@ This repository is a collection of writeups and solutions for various Capture Th
 │   └── Gare
 │       └─ ...
 |
-├── CyberChallenge/
-|   └─ Challenges
-│       └── Category/
-│           ├── Challenge-Name/
-│           │   ├── sol.py or notes
-│           │   └── other files  # if present
-|           └── ...
+├── Appunti/
+|   ├─ Web
+│   │  └── Argument
+│   │      └── ...
+|   ├─ Binary
+|   ├─ Crypto
+|   └─ Misc/Network
 ├── Others
 |   ├─ other CTFs
 |   └── ...
