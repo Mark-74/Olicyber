@@ -22,6 +22,8 @@ def encrypt(plaintext):
     return {"ciphertext": encrypted.hex()}
 ```
 
+![AES ECB](images/ECB.png)
+
 Queste challenge si basano sul fatto che, in ECB, un blocco con un certo contenuto sarà trasformato sempre nello stesso output, a differenza di CBC in cui anche i blocchi precedenti hanno degli effetti sull'output di un blocco.
 
 Per poter trovare la flag è necessario "spingerla" in un blocco di cui conosciamo il contenuto. Il blocco migliore (almeno in questo caso) è l'ultimo, se riusciamo a paddare la flag in modo tale da arrivare a una situazione di questo tipo: `'input + padding' 'caratteri della flag' 'padding'`.
