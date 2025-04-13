@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}Poll{% endblock %}
+{% block content %}
+
+<h1 class="text-center">Questionario</h1>
+
+<div class="me-auto ms-auto">
+
+    {% if count == 0 %}
+
+    <h4>Qual è il piatto preferito del Gabibbo?</h4>
+    <div class="form-check">
+        <input class="form-check-input" name="q1" type="radio" value="0" id="q1_0" checked />
+        <label class="form-check-label" for="q1_0">Fritto misto</label>
+    </div>
+    <div class="form-check">
+        <input class="form-check-input" name="q1" type="radio" value="1" id="q1_1" />
+        <label class="form-check-label" for="q1_1">Lacrime di Gerry Scotti</label>
+    </div>
+    <div class="form-check">
+        <input class="form-check-input" name="q1" type="radio" value="2" id="q1_2" />
+        <label class="form-check-label" for="q1_2">Juliana Moreira</label>
+    </div>
+
+    <h4>Quanto ci metteremo a finire i tool per l'A/D?</h4>
+    <div class="form-check">
+        <input class="form-check-input" name="q2" type="radio" value="0" id="q2_0" checked />
+        <label class="form-check-label" for="q2_0">Almeno 7</label>
+    </div>
+    <div class="form-check">
+        <input class="form-check-input" name="q2" type="radio" value="1" id="q2_1" />
+        <label class="form-check-label" for="q2_1">420 anni</label>
+    </div>
+    <div class="form-check">
+        <input class="form-check-input" name="q2" type="radio" value="2" id="q2_2" />
+        <label class="form-check-label" for="q2_2">69 anni</label>
+    </div>
+    <div class="form-check">
+        <input class="form-check-input" name="q2" type="radio" value="3" id="q2_3" />
+        <label class="form-check-label" for="q2_3">un micromarcog</label>
+    </div>
+
+    <h4>Scegli la tua challenge preferita</h4>
+    <div class="form-check">
+        <input class="form-check-input" name="q3" type="radio" value="0" id="q3_0" checked />
+        <label class="form-check-label" for="flexCheckDefault">Questa</label>
+    </div>
+
+
+    <input class="btn btn-primary" type="submit" value="Submit" onclick="submitform()" />
+
+
+    <script>
+        const submitform = () => {
+            let q1 = document.querySelector('input[name="q1"]:checked').value;
+            let q2 = document.querySelector('input[name="q2"]:checked').value;
+            let q3 = document.querySelector('input[name="q3"]:checked').value;
+
+            let data = [
+                q1,
+                q2,
+                q3
+            ];
+
+            console.log(JSON.stringify(data));
+
+            fetch('/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+                .then(() => {
+                    location.reload();
+                })
+                .catch(() => {
+                    alert("Errore nell' invio delle risposte");
+                });
+
+        };
+    </script>
+
+
+    {% else %}
+
+    <h4 class="text-center">Form già inviato, ti ringraziamo!</h4>
+
+    {% endif %}
+
+</div>
+
+{% endblock %}
