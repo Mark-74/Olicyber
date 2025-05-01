@@ -1,0 +1,1 @@
+per solvare basterà inviare payload.tar al servizio decrypt. payload.tar contiene un symlink denominato sol (ln -s /etc/cryptodata/flag.txt.enc sol), quindi quando andrà a decriptare il file decripterà la flag (che in questo momento è encriptata).
