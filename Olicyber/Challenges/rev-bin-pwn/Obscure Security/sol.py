@@ -25,10 +25,7 @@ def inv_152E(v, int1, int2):
 
 def inv_1B4A(v1, v2):
     for i in reversed(range(len(v1))):
-        for j in range(256):
-            if v1[i] == (v2[i] & (~j)) | ((~v2[i]) & j):
-                v1[i] = j
-                break
+        v1[i] ^= v2[i]
     
     return v1
             
