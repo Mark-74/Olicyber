@@ -1,0 +1,7 @@
+Quante volte nel manuale del C++ una situazione porta ad undefined behaviour?
+Le possibili risposte:
+A - 37
+B - 182
+C - 1439
+D - Non si sa, sono troppi, stanno provando a contarli.
+D
