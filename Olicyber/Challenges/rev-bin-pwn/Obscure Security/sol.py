@@ -1,3 +1,4 @@
+# Final solution made with the great help of @Daniele-byte
 import sys
 
 g4050 = 0x84ba7800
@@ -5,6 +6,15 @@ g4054 = 0x1438
 g4058 = 0x10
 g405C = 0x04
 g4060 = 0x0a
+
+# inverse for conditional + 'O'
+def inv_conditional_O(v):
+    v = v[:]
+    for i in range(len(v)):
+        test = (v[i] - 0x4F) & 0xff  # candidate pre-addition
+        if ((test + g4050 - 0x24) & 0xff) == 0:
+            v[i] = test
+    return v
 
 def inv_cambia(v):
     for i in reversed(range(0, len(v), 2)):
@@ -34,20 +44,28 @@ def inv_164e(v, shift):
         v[i] = (v[i] + i - shift) & 0xff
     
     return v
-        
-def inv_1491(v, _int):
-    idx = 0
-    i = _int - 1
-    while i != -1:
-        if v[idx] + 32 > 96 and v[idx] + 32 < 123:
-            v[idx] += 32
-            
-        if i <= 0:
-            i = -(i + 1)
-        else:
-            i = -(i - 1)
-    
-    return v
+
+# Modified 
+def inv_1491(v, OFF):
+    """
+    Simple inverse of FUN_00101491.
+    Visits the prefix of length OFF in the pattern:
+      0, OFF-1, 1, OFF-2, 2, OFF-3, ...
+    and converts any visited uppercase ASCII letters (A-Z) to lowercase.
+    Returns a new list (does not modify input).
+    """
+    out = v[:]  # work on a copy
+    if OFF <= 0:
+        return out
+
+    OFF = min(OFF, len(out))
+    for t in range(OFF):
+        # simple zig-zag index formula
+        idx = (t // 2) if (t % 2 == 0) else (OFF - 1 - (t // 2))
+        if 0 <= idx < len(out) and 65 <= out[idx] <= 90:
+            out[idx] = (out[idx] + 0x20) & 0xff
+    return out
+
 
 def inv_138E(v, length):
     i = 0
@@ -94,9 +112,8 @@ tmp = inv_138E(output[g4060:], len(output[g4060:]))
 output[g4060:] = tmp
 output = _1767(output, g4058)
 
-for i in range(len(output)):
-    if output[i] == 0x24 - g4050 & 0xff:
-        output[i] -= 0x73 - 0x24
+# Modify "s" in "$"
+output = inv_conditional_O(output)
 
 output = inv_152E(output, 52, 97)
 output = inv_152E(output, 51, 101)
