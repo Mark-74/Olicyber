@@ -9,7 +9,7 @@ if args.REMOTE:
 else:
     r = process('./source.py')
 
-plaintext = b'Cosa ne pensi? Bob: Ok. Allora mi puoi dare la flag? Alice: Nah, ma ti pare? Sono studiata io... Bob: Ma seriamente, ti immagini se qualcuno riuscisse ad ottenere i nostri messaggi?'
+plaintext = b'eccola: flag{Sono_Stup3Nda}. Cosa ne pensi? Bob: Ok. Allora mi puoi dare la flag? Alice: Nah, ma ti pare? Sono studiata io... Bob: Ma seriamente, ti immagini se qualcuno riuscisse ad ottenere i nostri messaggi?'
 pre_padding = b'\x00'*11
 
 while True:
