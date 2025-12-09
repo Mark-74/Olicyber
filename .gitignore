@@ -1,6 +1,7 @@
 *
 !*.*
 !*/
+!Dockerfile
 
 project.rep
 *.prg
@@ -8,6 +9,7 @@ sherlock/
 pwndbg/
 *.pcap*
 *.so.*
+*.so
 rockyou.txt
 .vscode
 .gdb_history

@@ -1,0 +1,7 @@
+version: "2.2"
+services:
+  bingo:
+    build: .
+    ports:
+      - "1907:1907"
+    restart: unless-stopped
