@@ -1,0 +1,516 @@
+--- /Source/JavaScriptCore/runtime/ArrayPrototype.cpp
++++ /Source/JavaScriptCore/runtime/ArrayPrototype.cpp
+@@ -70,6 +70,8 @@
+ static JSC_DECLARE_HOST_FUNCTION(arrayProtoFuncWith);
+ static JSC_DECLARE_HOST_FUNCTION(arrayProtoFuncIncludes);
+ 
++static JSC_DECLARE_HOST_FUNCTION(arrayProtoFuncGift);
++
+ // ------------------------------ ArrayPrototype ----------------------------
+ 
+ const ClassInfo ArrayPrototype::s_info = { "Array"_s, &JSArray::s_info, nullptr, nullptr, CREATE_METHOD_TABLE(ArrayPrototype) };
+@@ -103,6 +105,9 @@
+     JSC_NATIVE_INTRINSIC_FUNCTION_WITHOUT_TRANSITION("pop"_s, arrayProtoFuncPop, static_cast<unsigned>(PropertyAttribute::DontEnum), 0, ImplementationVisibility::Public, ArrayPopIntrinsic);
+     JSC_NATIVE_INTRINSIC_FUNCTION_WITHOUT_TRANSITION(vm.propertyNames->builtinNames().pushPublicName(), arrayProtoFuncPush, static_cast<unsigned>(PropertyAttribute::DontEnum), 1, ImplementationVisibility::Public, ArrayPushIntrinsic);
+     JSC_NATIVE_FUNCTION_WITHOUT_TRANSITION("reverse"_s, arrayProtoFuncReverse, static_cast<unsigned>(PropertyAttribute::DontEnum), 0, ImplementationVisibility::Public);
++
++    JSC_NATIVE_FUNCTION_WITHOUT_TRANSITION("gift"_s, arrayProtoFuncGift, static_cast<unsigned>(PropertyAttribute::DontEnum), 0, ImplementationVisibility::Public);
++
+     JSC_NATIVE_FUNCTION_WITHOUT_TRANSITION(vm.propertyNames->builtinNames().shiftPublicName(), arrayProtoFuncShift, static_cast<unsigned>(PropertyAttribute::DontEnum), 0, ImplementationVisibility::Public);
+     JSC_NATIVE_FUNCTION_WITHOUT_TRANSITION(vm.propertyNames->builtinNames().shiftPrivateName(), arrayProtoFuncShift, PropertyAttribute::DontEnum | PropertyAttribute::DontDelete | PropertyAttribute::ReadOnly, 0, ImplementationVisibility::Public);
+     JSC_NATIVE_INTRINSIC_FUNCTION_WITHOUT_TRANSITION(vm.propertyNames->slice, arrayProtoFuncSlice, static_cast<unsigned>(PropertyAttribute::DontEnum), 2, ImplementationVisibility::Public, ArraySliceIntrinsic);
+@@ -760,6 +765,39 @@
+     return JSValue::encode(jsNumber(newLength));
+ }
+ 
++
++JSC_DEFINE_HOST_FUNCTION(arrayProtoFuncGift, (JSGlobalObject* globalObject, CallFrame* callFrame))
++{
++    VM& vm = globalObject->vm();
++    auto scope = DECLARE_THROW_SCOPE(vm);
++    JSValue thisValue = callFrame->thisValue().toThis(globalObject, ECMAMode::strict());
++
++    if (!isJSArray(thisValue))
++        RELEASE_AND_RETURN(scope, JSValue::encode(jsUndefined()));
++
++    JSObject* thisObj = thisValue.toObject(globalObject);
++    EXCEPTION_ASSERT(!!scope.exception() == !thisObj);
++    if (UNLIKELY(!thisObj))
++        return encodedJSValue();
++
++    uint8_t index = argumentUnclampedIndexFromStartOrEnd(globalObject, callFrame->argument(0), 0); // primo argomento = index (uint8_t)
++    double what = callFrame->argument(1).toNumber(globalObject); // secondo argomento = what (double)
++
++    thisObj->ensureWritable(vm);
++
++    JSArray* array = asArray(thisValue);
++    Butterfly* butterfly = array->butterfly();
++
++    if (array->indexingMode() != ArrayWithDouble)
++        RELEASE_AND_RETURN(scope, JSValue::encode(jsUndefined()));
++
++    auto data = butterfly->contiguousDouble().data();
++    data[index] = what;
++
++    RELEASE_AND_RETURN(scope, JSValue::encode(jsUndefined()));
++}
++
++
+ JSC_DEFINE_HOST_FUNCTION(arrayProtoFuncReverse, (JSGlobalObject* globalObject, CallFrame* callFrame))
+ {
+     VM& vm = globalObject->vm();
+--- /Source/JavaScriptCore/jsc.cpp
++++ /Source/JavaScriptCore/jsc.cpp
+@@ -631,229 +631,229 @@
+         Base::finishCreation(vm);
+         JSC_TO_STRING_TAG_WITHOUT_TRANSITION();
+ 
+-        // Set loop counts based on enabled engine tiers.
+-        unsigned testLoopCount = 10000;
+-        if (!Options::useDFGJIT())
+-            testLoopCount = 1000;
+-        if (!Options::useBaselineJIT())
+-            testLoopCount = 100;
+-
+-        unsigned wasmTestLoopCount = 10000;
+-        if (!Options::useOMGJIT())
+-            wasmTestLoopCount = 1000;
+-        if (!Options::useBBQJIT())
+-            wasmTestLoopCount = 100;
+-
+-        putDirect(vm, Identifier::fromString(vm, "testLoopCount"_s), jsNumber(testLoopCount), DontEnum);
+-        putDirect(vm, Identifier::fromString(vm, "wasmTestLoopCount"_s), jsNumber(wasmTestLoopCount), DontEnum);
+-
+-        addFunction(vm, "atob"_s, functionAtob, 1);
+-        addFunction(vm, "btoa"_s, functionBtoa, 1);
+-        addFunction(vm, "disassembleBase64"_s, functionDisassembleBase64, 1);
+-        addFunction(vm, "debug"_s, functionDebug, 1);
+-        addFunction(vm, "describe"_s, functionDescribe, 1);
+-        addFunction(vm, "describeArray"_s, functionDescribeArray, 1);
+-        addFunction(vm, "print"_s, functionPrintStdOut, 1);
+-        addFunction(vm, "printErr"_s, functionPrintStdErr, 1);
+-        addFunction(vm, "prettyPrint"_s, functionPrettyPrint, 1);
+-        addFunction(vm, "quit"_s, functionQuit, 0);
+-        addFunction(vm, "gc"_s, functionGCAndSweep, 0);
+-        addFunction(vm, "fullGC"_s, functionFullGC, 0);
+-        addFunction(vm, "edenGC"_s, functionEdenGC, 0);
+-        addFunction(vm, "gcHeapSize"_s, functionHeapSize, 0);
+-        addFunction(vm, "memoryUsageStatistics"_s, functionMemoryUsageStatistics, 0);
+-        addFunction(vm, "MemoryFootprint"_s, functionCreateMemoryFootprint, 0);
+-        addFunction(vm, "resetMemoryPeak"_s, functionResetMemoryPeak, 0);
+-        addFunction(vm, "addressOf"_s, functionAddressOf, 1);
+-        addFunction(vm, "version"_s, functionVersion, 1);
+-        addFunction(vm, "run"_s, functionRun, 1);
+-        addFunction(vm, "runString"_s, functionRunString, 1);
+-        addFunction(vm, "load"_s, functionLoad, 1);
+-        addFunction(vm, "loadString"_s, functionLoadString, 1);
+-        addFunction(vm, "readFile"_s, functionReadFile, 2);
+-        addFunction(vm, "read"_s, functionReadFile, 2);
+-        addFunction(vm, "writeFile"_s, functionWriteFile, 2);
+-        addFunction(vm, "write"_s, functionWriteFile, 2);
+-        addFunction(vm, "checkSyntax"_s, functionCheckSyntax, 1);
+-        addFunction(vm, "sleepSeconds"_s, functionSleepSeconds, 1);
+-        addFunction(vm, "jscStack"_s, functionJSCStack, 1);
+-        addFunction(vm, "openFile"_s, functionOpenFile, 1);
+-        addFunction(vm, "readline"_s, functionReadline, 0);
+-        addFunction(vm, "preciseTime"_s, functionPreciseTime, 0);
+-        addFunction(vm, "neverInlineFunction"_s, functionNeverInlineFunction, 1);
+-        addFunction(vm, "noInline"_s, functionNeverInlineFunction, 1);
+-        addFunction(vm, "noDFG"_s, functionNoDFG, 1);
+-        addFunction(vm, "noFTL"_s, functionNoFTL, 1);
+-        addFunction(vm, "noOSRExitFuzzing"_s, functionNoOSRExitFuzzing, 1);
+-        addFunction(vm, "numberOfDFGCompiles"_s, functionNumberOfDFGCompiles, 1);
+-        addFunction(vm, "callerIsBBQOrOMGCompiled"_s, functionCallerIsBBQOrOMGCompiled, 0);
+-        addFunction(vm, "jscOptions"_s, functionJSCOptions, 0);
+-        addFunction(vm, "optimizeNextInvocation"_s, functionOptimizeNextInvocation, 1);
+-        addFunction(vm, "reoptimizationRetryCount"_s, functionReoptimizationRetryCount, 1);
+-        addFunction(vm, "transferArrayBuffer"_s, functionTransferArrayBuffer, 1);
+-        addFunction(vm, "failNextNewCodeBlock"_s, functionFailNextNewCodeBlock, 1);
+-#if ENABLE(SAMPLING_FLAGS)
+-        addFunction(vm, "setSamplingFlags"_s, functionSetSamplingFlags, 1);
+-        addFunction(vm, "clearSamplingFlags"_s, functionClearSamplingFlags, 1);
+-#endif
+-
+-        putDirectNativeFunction(vm, this, Identifier::fromString(vm, "OSRExit"_s), 0, functionUndefined1, ImplementationVisibility::Public, OSRExitIntrinsic, DontEnum);
+-        putDirectNativeFunction(vm, this, Identifier::fromString(vm, "isFinalTier"_s), 0, functionFalse, ImplementationVisibility::Public, IsFinalTierIntrinsic, DontEnum);
+-        putDirectNativeFunction(vm, this, Identifier::fromString(vm, "predictInt32"_s), 0, functionUndefined2, ImplementationVisibility::Public, SetInt32HeapPredictionIntrinsic, DontEnum);
+-        putDirectNativeFunction(vm, this, Identifier::fromString(vm, "isInt32"_s), 0, functionIsInt32, ImplementationVisibility::Public, CheckInt32Intrinsic, DontEnum);
+-        putDirectNativeFunction(vm, this, Identifier::fromString(vm, "isPureNaN"_s), 0, functionIsPureNaN, ImplementationVisibility::Public, CheckInt32Intrinsic, DontEnum);
+-        putDirectNativeFunction(vm, this, Identifier::fromString(vm, "fiatInt52"_s), 0, functionIdentity, ImplementationVisibility::Public, FiatInt52Intrinsic, DontEnum);
+-        
+-        addFunction(vm, "effectful42"_s, functionEffectful42, 0);
+-        addFunction(vm, "makeMasquerader"_s, functionMakeMasquerader, 0);
+-        addFunction(vm, "hasCustomProperties"_s, functionHasCustomProperties, 0);
+-
+-        addFunction(vm, "createGlobalObject"_s, functionCreateGlobalObject, 0);
+-        addFunction(vm, "createHeapBigInt"_s, functionCreateHeapBigInt, 1);
+-#if USE(BIGINT32)
+-        addFunction(vm, "createBigInt32"_s, functionCreateBigInt32, 1);
+-#endif
+-        addFunction(vm, "useBigInt32"_s, functionUseBigInt32, 0);
+-        addFunction(vm, "isBigInt32"_s, functionIsBigInt32, 1);
+-        addFunction(vm, "isHeapBigInt"_s, functionIsHeapBigInt, 1);
+-
+-        addFunction(vm, "createNonRopeNonAtomString"_s, functionCreateNonRopeNonAtomString, 1);
+-
+-        addFunction(vm, "dumpTypesForAllVariables"_s, functionDumpTypesForAllVariables , 0);
+-
+-        addFunction(vm, "drainMicrotasks"_s, functionDrainMicrotasks, 0);
+-        addFunction(vm, "setTimeout"_s, functionSetTimeout, 2);
+-
+-        addFunction(vm, "releaseWeakRefs"_s, functionReleaseWeakRefs, 0);
+-        addFunction(vm, "finalizationRegistryLiveCount"_s, functionFinalizationRegistryLiveCount, 0);
+-        addFunction(vm, "finalizationRegistryDeadCount"_s, functionFinalizationRegistryDeadCount, 0);
+-        
+-        addFunction(vm, "getRandomSeed"_s, functionGetRandomSeed, 0);
+-        addFunction(vm, "setRandomSeed"_s, functionSetRandomSeed, 1);
+-        addFunction(vm, "isRope"_s, functionIsRope, 1);
+-        addFunction(vm, "callerSourceOrigin"_s, functionCallerSourceOrigin, 0);
+-
+-        addFunction(vm, "is32BitPlatform"_s, functionIs32BitPlatform, 0);
+-
+-        addFunction(vm, "checkModuleSyntax"_s, functionCheckModuleSyntax, 1);
+-        addFunction(vm, "checkScriptSyntax"_s, functionCheckScriptSyntax, 1);
+-
+-        addFunction(vm, "platformSupportsSamplingProfiler"_s, functionPlatformSupportsSamplingProfiler, 0);
+-        addFunction(vm, "generateHeapSnapshot"_s, functionGenerateHeapSnapshot, 0);
+-        addFunction(vm, "generateHeapSnapshotForGCDebugging"_s, functionGenerateHeapSnapshotForGCDebugging, 0);
+-        addFunction(vm, "resetSuperSamplerState"_s, functionResetSuperSamplerState, 0);
+-        addFunction(vm, "ensureArrayStorage"_s, functionEnsureArrayStorage, 0);
+-#if ENABLE(SAMPLING_PROFILER)
+-        addFunction(vm, "startSamplingProfiler"_s, functionStartSamplingProfiler, 0);
+-        addFunction(vm, "samplingProfilerStackTraces"_s, functionSamplingProfilerStackTraces, 0);
+-#endif
+-
+-        addFunction(vm, "maxArguments"_s, functionMaxArguments, 0);
+-
+-        addFunction(vm, "asyncTestStart"_s, functionAsyncTestStart, 1);
+-        addFunction(vm, "asyncTestPassed"_s, functionAsyncTestPassed, 1);
+-
+-#if ENABLE(WEBASSEMBLY)
+-        addFunction(vm, "WebAssemblyMemoryMode"_s, functionWebAssemblyMemoryMode, 1);
+-        addFunction(vm, "createWebAssemblyMemoryWithMode"_s, functionCreateWebAssemblyMemoryWithMode, 2);
+-#endif
+-
+-        if (!arguments.isEmpty()) {
+-            JSArray* array = constructEmptyArray(this, nullptr);
+-            for (size_t i = 0; i < arguments.size(); ++i)
+-                array->putDirectIndex(this, i, jsString(vm, arguments[i]));
+-            putDirect(vm, Identifier::fromString(vm, "arguments"_s), array, DontEnum);
+-        }
+-
+-        putDirect(vm, Identifier::fromString(vm, "console"_s), jsUndefined(), DontEnum);
+-        
+-        Structure* plainObjectStructure = JSFinalObject::createStructure(vm, this, objectPrototype(), 0);
+-        
+-        JSObject* dollar = JSFinalObject::create(vm, plainObjectStructure);
+-        putDirect(vm, Identifier::fromString(vm, "$"_s), dollar, DontEnum);
+-        putDirect(vm, Identifier::fromString(vm, "$262"_s), dollar, DontEnum);
+-        
+-        addFunctionToObject(vm, dollar, "createRealm"_s, functionDollarCreateRealm, 0, static_cast<unsigned>(PropertyAttribute::None));
+-        addFunctionToObject(vm, dollar, "detachArrayBuffer"_s, functionTransferArrayBuffer, 1, static_cast<unsigned>(PropertyAttribute::None));
+-        addFunctionToObject(vm, dollar, "evalScript"_s, functionDollarEvalScript, 1, static_cast<unsigned>(PropertyAttribute::None));
+-        addFunctionToObject(vm, dollar, "gc"_s, functionDollarGC, 0, static_cast<unsigned>(PropertyAttribute::None));
+-        addFunctionToObject(vm, dollar, "clearKeptObjects"_s, functionDollarClearKeptObjects, 0, static_cast<unsigned>(PropertyAttribute::None));
+-        addFunctionToObject(vm, dollar, "globalObjectFor"_s, functionDollarGlobalObjectFor, 1, static_cast<unsigned>(PropertyAttribute::None));
+-        addFunctionToObject(vm, dollar, "isRemoteFunction"_s, functionDollarIsRemoteFunction, 1, static_cast<unsigned>(PropertyAttribute::None));
+-        
+-        dollar->putDirect(vm, Identifier::fromString(vm, "global"_s), globalThis());
+-        dollar->putDirectCustomAccessor(vm, Identifier::fromString(vm, "IsHTMLDDA"_s),
+-            CustomGetterSetter::create(vm, accessorMakeMasquerader, nullptr),
+-            static_cast<unsigned>(PropertyAttribute::CustomValue)
+-        );
+-
+-        JSObject* agent = JSFinalObject::create(vm, plainObjectStructure);
+-        dollar->putDirect(vm, Identifier::fromString(vm, "agent"_s), agent);
+-        
+-        // The test262 INTERPRETING.md document says that some of these functions are just in the main
+-        // thread and some are in the other threads. We just put them in all threads.
+-        addFunctionToObject(vm, agent, "start"_s, functionDollarAgentStart, 1);
+-        addFunctionToObject(vm, agent, "receiveBroadcast"_s, functionDollarAgentReceiveBroadcast, 1);
+-        addFunctionToObject(vm, agent, "report"_s, functionDollarAgentReport, 1);
+-        addFunctionToObject(vm, agent, "sleep"_s, functionDollarAgentSleep, 1);
+-        addFunctionToObject(vm, agent, "broadcast"_s, functionDollarAgentBroadcast, 1);
+-        addFunctionToObject(vm, agent, "getReport"_s, functionDollarAgentGetReport, 0);
+-        addFunctionToObject(vm, agent, "leaving"_s, functionDollarAgentLeaving, 0);
+-        addFunctionToObject(vm, agent, "monotonicNow"_s, functionDollarAgentMonotonicNow, 0);
+-
+-        addFunction(vm, "waiterListSize"_s, functionWaiterListSize, 2);
+-
+-        addFunction(vm, "waitForReport"_s, functionWaitForReport, 0);
+-
+-        addFunction(vm, "heapCapacity"_s, functionHeapCapacity, 0);
+-        addFunction(vm, "flashHeapAccess"_s, functionFlashHeapAccess, 0);
+-
+-        addFunction(vm, "disableRichSourceInfo"_s, functionDisableRichSourceInfo, 0);
+-        addFunction(vm, "mallocInALoop"_s, functionMallocInALoop, 0);
+-        addFunction(vm, "totalCompileTime"_s, functionTotalCompileTime, 0);
+-
+-        addFunction(vm, "setUnhandledRejectionCallback"_s, functionSetUnhandledRejectionCallback, 1);
+-
+-        addFunction(vm, "asDoubleNumber"_s, functionAsDoubleNumber, 1);
+-
+-        addFunction(vm, "dropAllLocks"_s, functionDropAllLocks, 1);
+-
+-        // We'll probably have to make this a real class if we want to add performance.mark in the future.
+-        JSObject* performance = JSFinalObject::create(vm, plainObjectStructure);
+-        putDirect(vm, Identifier::fromString(vm, "performance"_s), performance, DontEnum);
+-        addFunctionToObject(vm, performance, "now"_s, functionPerformanceNow, 0);
+-
+-#if ENABLE(FUZZILLI)
+-        addFunction(vm, "fuzzilli"_s, functionFuzzilli, 2);
+-#endif
+-
+-        if (Options::exposeCustomSettersOnGlobalObjectForTesting()) {
+-            auto putDirectCustomAccessor = [&] (VM& vm, PropertyName propertyName, JSValue value, unsigned attributes) -> bool {
+-                return putDirectCustomAccessorImpl(filter, vm, propertyName, value, attributes);
+-            };
+-
+-            {
+-                CustomGetterSetter* custom = CustomGetterSetter::create(vm, nullptr, testCustomAccessorSetter);
+-                Identifier identifier = Identifier::fromString(vm, "testCustomAccessorSetter"_s);
+-                putDirectCustomAccessor(vm, identifier, custom, PropertyAttribute::DontEnum | PropertyAttribute::DontDelete | PropertyAttribute::CustomAccessor);
+-            }
+-
+-            {
+-                CustomGetterSetter* custom = CustomGetterSetter::create(vm, nullptr, testCustomValueSetter);
+-                Identifier identifier = Identifier::fromString(vm, "testCustomValueSetter"_s);
+-                putDirectCustomAccessor(vm, identifier, custom, PropertyAttribute::DontEnum | PropertyAttribute::DontDelete | PropertyAttribute::CustomValue);
+-            }
+-        }
+-
+-        if (Options::useDollarVM()) {
+-            // $vm is added in JSGlobalObject but we also want it filtered out. Just add it to the filter here.
+-            Identifier dollarVMIdentifier = Identifier::fromString(vm, "$vm"_s);
+-            rememberDontEnumProperty(filter, dollarVMIdentifier.impl(), 0 | PropertyAttribute::DontEnum);
+-        }
+-
+-#if PLATFORM(COCOA)
+-        enableAllSDKAlignedBehaviors();
+-#endif
++//         // Set loop counts based on enabled engine tiers.
++//         unsigned testLoopCount = 10000;
++//         if (!Options::useDFGJIT())
++//             testLoopCount = 1000;
++//         if (!Options::useBaselineJIT())
++//             testLoopCount = 100;
++
++//         unsigned wasmTestLoopCount = 10000;
++//         if (!Options::useOMGJIT())
++//             wasmTestLoopCount = 1000;
++//         if (!Options::useBBQJIT())
++//             wasmTestLoopCount = 100;
++
++//         putDirect(vm, Identifier::fromString(vm, "testLoopCount"_s), jsNumber(testLoopCount), DontEnum);
++//         putDirect(vm, Identifier::fromString(vm, "wasmTestLoopCount"_s), jsNumber(wasmTestLoopCount), DontEnum);
++
++//         addFunction(vm, "atob"_s, functionAtob, 1);
++//         addFunction(vm, "btoa"_s, functionBtoa, 1);
++//         addFunction(vm, "disassembleBase64"_s, functionDisassembleBase64, 1);
++//         addFunction(vm, "debug"_s, functionDebug, 1);
++//         addFunction(vm, "describe"_s, functionDescribe, 1);
++//         addFunction(vm, "describeArray"_s, functionDescribeArray, 1);
++         addFunction(vm, "print"_s, functionPrintStdOut, 1);
++//         addFunction(vm, "printErr"_s, functionPrintStdErr, 1);
++//         addFunction(vm, "prettyPrint"_s, functionPrettyPrint, 1);
++//         addFunction(vm, "quit"_s, functionQuit, 0);
++//         addFunction(vm, "gc"_s, functionGCAndSweep, 0);
++//         addFunction(vm, "fullGC"_s, functionFullGC, 0);
++//         addFunction(vm, "edenGC"_s, functionEdenGC, 0);
++//         addFunction(vm, "gcHeapSize"_s, functionHeapSize, 0);
++//         addFunction(vm, "memoryUsageStatistics"_s, functionMemoryUsageStatistics, 0);
++//         addFunction(vm, "MemoryFootprint"_s, functionCreateMemoryFootprint, 0);
++//         addFunction(vm, "resetMemoryPeak"_s, functionResetMemoryPeak, 0);
++//         addFunction(vm, "addressOf"_s, functionAddressOf, 1);
++//         addFunction(vm, "version"_s, functionVersion, 1);
++//         addFunction(vm, "run"_s, functionRun, 1);
++//         addFunction(vm, "runString"_s, functionRunString, 1);
++//         addFunction(vm, "load"_s, functionLoad, 1);
++//         addFunction(vm, "loadString"_s, functionLoadString, 1);
++//         addFunction(vm, "readFile"_s, functionReadFile, 2);
++//         addFunction(vm, "read"_s, functionReadFile, 2);
++//         addFunction(vm, "writeFile"_s, functionWriteFile, 2);
++//         addFunction(vm, "write"_s, functionWriteFile, 2);
++//         addFunction(vm, "checkSyntax"_s, functionCheckSyntax, 1);
++//         addFunction(vm, "sleepSeconds"_s, functionSleepSeconds, 1);
++//         addFunction(vm, "jscStack"_s, functionJSCStack, 1);
++//         addFunction(vm, "openFile"_s, functionOpenFile, 1);
++//         addFunction(vm, "readline"_s, functionReadline, 0);
++//         addFunction(vm, "preciseTime"_s, functionPreciseTime, 0);
++//         addFunction(vm, "neverInlineFunction"_s, functionNeverInlineFunction, 1);
++//         addFunction(vm, "noInline"_s, functionNeverInlineFunction, 1);
++//         addFunction(vm, "noDFG"_s, functionNoDFG, 1);
++//         addFunction(vm, "noFTL"_s, functionNoFTL, 1);
++//         addFunction(vm, "noOSRExitFuzzing"_s, functionNoOSRExitFuzzing, 1);
++//         addFunction(vm, "numberOfDFGCompiles"_s, functionNumberOfDFGCompiles, 1);
++//         addFunction(vm, "callerIsBBQOrOMGCompiled"_s, functionCallerIsBBQOrOMGCompiled, 0);
++//         addFunction(vm, "jscOptions"_s, functionJSCOptions, 0);
++//         addFunction(vm, "optimizeNextInvocation"_s, functionOptimizeNextInvocation, 1);
++//         addFunction(vm, "reoptimizationRetryCount"_s, functionReoptimizationRetryCount, 1);
++//         addFunction(vm, "transferArrayBuffer"_s, functionTransferArrayBuffer, 1);
++//         addFunction(vm, "failNextNewCodeBlock"_s, functionFailNextNewCodeBlock, 1);
++// #if ENABLE(SAMPLING_FLAGS)
++//         addFunction(vm, "setSamplingFlags"_s, functionSetSamplingFlags, 1);
++//         addFunction(vm, "clearSamplingFlags"_s, functionClearSamplingFlags, 1);
++// #endif
++
++//         putDirectNativeFunction(vm, this, Identifier::fromString(vm, "OSRExit"_s), 0, functionUndefined1, ImplementationVisibility::Public, OSRExitIntrinsic, DontEnum);
++//         putDirectNativeFunction(vm, this, Identifier::fromString(vm, "isFinalTier"_s), 0, functionFalse, ImplementationVisibility::Public, IsFinalTierIntrinsic, DontEnum);
++//         putDirectNativeFunction(vm, this, Identifier::fromString(vm, "predictInt32"_s), 0, functionUndefined2, ImplementationVisibility::Public, SetInt32HeapPredictionIntrinsic, DontEnum);
++//         putDirectNativeFunction(vm, this, Identifier::fromString(vm, "isInt32"_s), 0, functionIsInt32, ImplementationVisibility::Public, CheckInt32Intrinsic, DontEnum);
++//         putDirectNativeFunction(vm, this, Identifier::fromString(vm, "isPureNaN"_s), 0, functionIsPureNaN, ImplementationVisibility::Public, CheckInt32Intrinsic, DontEnum);
++//         putDirectNativeFunction(vm, this, Identifier::fromString(vm, "fiatInt52"_s), 0, functionIdentity, ImplementationVisibility::Public, FiatInt52Intrinsic, DontEnum);
++        
++//         addFunction(vm, "effectful42"_s, functionEffectful42, 0);
++//         addFunction(vm, "makeMasquerader"_s, functionMakeMasquerader, 0);
++//         addFunction(vm, "hasCustomProperties"_s, functionHasCustomProperties, 0);
++
++//         addFunction(vm, "createGlobalObject"_s, functionCreateGlobalObject, 0);
++//         addFunction(vm, "createHeapBigInt"_s, functionCreateHeapBigInt, 1);
++// #if USE(BIGINT32)
++//         addFunction(vm, "createBigInt32"_s, functionCreateBigInt32, 1);
++// #endif
++//         addFunction(vm, "useBigInt32"_s, functionUseBigInt32, 0);
++//         addFunction(vm, "isBigInt32"_s, functionIsBigInt32, 1);
++//         addFunction(vm, "isHeapBigInt"_s, functionIsHeapBigInt, 1);
++
++//         addFunction(vm, "createNonRopeNonAtomString"_s, functionCreateNonRopeNonAtomString, 1);
++
++//         addFunction(vm, "dumpTypesForAllVariables"_s, functionDumpTypesForAllVariables , 0);
++
++//         addFunction(vm, "drainMicrotasks"_s, functionDrainMicrotasks, 0);
++//         addFunction(vm, "setTimeout"_s, functionSetTimeout, 2);
++
++//         addFunction(vm, "releaseWeakRefs"_s, functionReleaseWeakRefs, 0);
++//         addFunction(vm, "finalizationRegistryLiveCount"_s, functionFinalizationRegistryLiveCount, 0);
++//         addFunction(vm, "finalizationRegistryDeadCount"_s, functionFinalizationRegistryDeadCount, 0);
++        
++//         addFunction(vm, "getRandomSeed"_s, functionGetRandomSeed, 0);
++//         addFunction(vm, "setRandomSeed"_s, functionSetRandomSeed, 1);
++//         addFunction(vm, "isRope"_s, functionIsRope, 1);
++//         addFunction(vm, "callerSourceOrigin"_s, functionCallerSourceOrigin, 0);
++
++//         addFunction(vm, "is32BitPlatform"_s, functionIs32BitPlatform, 0);
++
++//         addFunction(vm, "checkModuleSyntax"_s, functionCheckModuleSyntax, 1);
++//         addFunction(vm, "checkScriptSyntax"_s, functionCheckScriptSyntax, 1);
++
++//         addFunction(vm, "platformSupportsSamplingProfiler"_s, functionPlatformSupportsSamplingProfiler, 0);
++//         addFunction(vm, "generateHeapSnapshot"_s, functionGenerateHeapSnapshot, 0);
++//         addFunction(vm, "generateHeapSnapshotForGCDebugging"_s, functionGenerateHeapSnapshotForGCDebugging, 0);
++//         addFunction(vm, "resetSuperSamplerState"_s, functionResetSuperSamplerState, 0);
++//         addFunction(vm, "ensureArrayStorage"_s, functionEnsureArrayStorage, 0);
++// #if ENABLE(SAMPLING_PROFILER)
++//         addFunction(vm, "startSamplingProfiler"_s, functionStartSamplingProfiler, 0);
++//         addFunction(vm, "samplingProfilerStackTraces"_s, functionSamplingProfilerStackTraces, 0);
++// #endif
++
++//         addFunction(vm, "maxArguments"_s, functionMaxArguments, 0);
++
++//         addFunction(vm, "asyncTestStart"_s, functionAsyncTestStart, 1);
++//         addFunction(vm, "asyncTestPassed"_s, functionAsyncTestPassed, 1);
++
++// #if ENABLE(WEBASSEMBLY)
++//         addFunction(vm, "WebAssemblyMemoryMode"_s, functionWebAssemblyMemoryMode, 1);
++//         addFunction(vm, "createWebAssemblyMemoryWithMode"_s, functionCreateWebAssemblyMemoryWithMode, 2);
++// #endif
++
++//         if (!arguments.isEmpty()) {
++//             JSArray* array = constructEmptyArray(this, nullptr);
++//             for (size_t i = 0; i < arguments.size(); ++i)
++//                 array->putDirectIndex(this, i, jsString(vm, arguments[i]));
++//             putDirect(vm, Identifier::fromString(vm, "arguments"_s), array, DontEnum);
++//         }
++
++//         putDirect(vm, Identifier::fromString(vm, "console"_s), jsUndefined(), DontEnum);
++        
++//         Structure* plainObjectStructure = JSFinalObject::createStructure(vm, this, objectPrototype(), 0);
++        
++//         JSObject* dollar = JSFinalObject::create(vm, plainObjectStructure);
++//         putDirect(vm, Identifier::fromString(vm, "$"_s), dollar, DontEnum);
++//         putDirect(vm, Identifier::fromString(vm, "$262"_s), dollar, DontEnum);
++        
++//         addFunctionToObject(vm, dollar, "createRealm"_s, functionDollarCreateRealm, 0, static_cast<unsigned>(PropertyAttribute::None));
++//         addFunctionToObject(vm, dollar, "detachArrayBuffer"_s, functionTransferArrayBuffer, 1, static_cast<unsigned>(PropertyAttribute::None));
++//         addFunctionToObject(vm, dollar, "evalScript"_s, functionDollarEvalScript, 1, static_cast<unsigned>(PropertyAttribute::None));
++//         addFunctionToObject(vm, dollar, "gc"_s, functionDollarGC, 0, static_cast<unsigned>(PropertyAttribute::None));
++//         addFunctionToObject(vm, dollar, "clearKeptObjects"_s, functionDollarClearKeptObjects, 0, static_cast<unsigned>(PropertyAttribute::None));
++//         addFunctionToObject(vm, dollar, "globalObjectFor"_s, functionDollarGlobalObjectFor, 1, static_cast<unsigned>(PropertyAttribute::None));
++//         addFunctionToObject(vm, dollar, "isRemoteFunction"_s, functionDollarIsRemoteFunction, 1, static_cast<unsigned>(PropertyAttribute::None));
++        
++//         dollar->putDirect(vm, Identifier::fromString(vm, "global"_s), globalThis());
++//         dollar->putDirectCustomAccessor(vm, Identifier::fromString(vm, "IsHTMLDDA"_s),
++//             CustomGetterSetter::create(vm, accessorMakeMasquerader, nullptr),
++//             static_cast<unsigned>(PropertyAttribute::CustomValue)
++//         );
++
++//         JSObject* agent = JSFinalObject::create(vm, plainObjectStructure);
++//         dollar->putDirect(vm, Identifier::fromString(vm, "agent"_s), agent);
++        
++//         // The test262 INTERPRETING.md document says that some of these functions are just in the main
++//         // thread and some are in the other threads. We just put them in all threads.
++//         addFunctionToObject(vm, agent, "start"_s, functionDollarAgentStart, 1);
++//         addFunctionToObject(vm, agent, "receiveBroadcast"_s, functionDollarAgentReceiveBroadcast, 1);
++//         addFunctionToObject(vm, agent, "report"_s, functionDollarAgentReport, 1);
++//         addFunctionToObject(vm, agent, "sleep"_s, functionDollarAgentSleep, 1);
++//         addFunctionToObject(vm, agent, "broadcast"_s, functionDollarAgentBroadcast, 1);
++//         addFunctionToObject(vm, agent, "getReport"_s, functionDollarAgentGetReport, 0);
++//         addFunctionToObject(vm, agent, "leaving"_s, functionDollarAgentLeaving, 0);
++//         addFunctionToObject(vm, agent, "monotonicNow"_s, functionDollarAgentMonotonicNow, 0);
++
++//         addFunction(vm, "waiterListSize"_s, functionWaiterListSize, 2);
++
++//         addFunction(vm, "waitForReport"_s, functionWaitForReport, 0);
++
++//         addFunction(vm, "heapCapacity"_s, functionHeapCapacity, 0);
++//         addFunction(vm, "flashHeapAccess"_s, functionFlashHeapAccess, 0);
++
++//         addFunction(vm, "disableRichSourceInfo"_s, functionDisableRichSourceInfo, 0);
++//         addFunction(vm, "mallocInALoop"_s, functionMallocInALoop, 0);
++//         addFunction(vm, "totalCompileTime"_s, functionTotalCompileTime, 0);
++
++//         addFunction(vm, "setUnhandledRejectionCallback"_s, functionSetUnhandledRejectionCallback, 1);
++
++//         addFunction(vm, "asDoubleNumber"_s, functionAsDoubleNumber, 1);
++
++//         addFunction(vm, "dropAllLocks"_s, functionDropAllLocks, 1);
++
++//         // We'll probably have to make this a real class if we want to add performance.mark in the future.
++//         JSObject* performance = JSFinalObject::create(vm, plainObjectStructure);
++//         putDirect(vm, Identifier::fromString(vm, "performance"_s), performance, DontEnum);
++//         addFunctionToObject(vm, performance, "now"_s, functionPerformanceNow, 0);
++
++// #if ENABLE(FUZZILLI)
++//         addFunction(vm, "fuzzilli"_s, functionFuzzilli, 2);
++// #endif
++
++//         if (Options::exposeCustomSettersOnGlobalObjectForTesting()) {
++//             auto putDirectCustomAccessor = [&] (VM& vm, PropertyName propertyName, JSValue value, unsigned attributes) -> bool {
++//                 return putDirectCustomAccessorImpl(filter, vm, propertyName, value, attributes);
++//             };
++
++//             {
++//                 CustomGetterSetter* custom = CustomGetterSetter::create(vm, nullptr, testCustomAccessorSetter);
++//                 Identifier identifier = Identifier::fromString(vm, "testCustomAccessorSetter"_s);
++//                 putDirectCustomAccessor(vm, identifier, custom, PropertyAttribute::DontEnum | PropertyAttribute::DontDelete | PropertyAttribute::CustomAccessor);
++//             }
++
++//             {
++//                 CustomGetterSetter* custom = CustomGetterSetter::create(vm, nullptr, testCustomValueSetter);
++//                 Identifier identifier = Identifier::fromString(vm, "testCustomValueSetter"_s);
++//                 putDirectCustomAccessor(vm, identifier, custom, PropertyAttribute::DontEnum | PropertyAttribute::DontDelete | PropertyAttribute::CustomValue);
++//             }
++//         }
++
++//         if (Options::useDollarVM()) {
++//             // $vm is added in JSGlobalObject but we also want it filtered out. Just add it to the filter here.
++//             Identifier dollarVMIdentifier = Identifier::fromString(vm, "$vm"_s);
++//             rememberDontEnumProperty(filter, dollarVMIdentifier.impl(), 0 | PropertyAttribute::DontEnum);
++//         }
++
++// #if PLATFORM(COCOA)
++//         enableAllSDKAlignedBehaviors();
++// #endif
+     }
+ 
+ public:

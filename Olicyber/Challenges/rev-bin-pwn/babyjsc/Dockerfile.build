@@ -1,0 +1,33 @@
+FROM ubuntu:24.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
+    python3 \
+    python3-pip \
+    wget \
+    ca-certificates \
+    xz-utils \
+    build-essential \
+    cmake \
+    meson \
+    ruby
+
+WORKDIR /root
+RUN wget https://webkitgtk.org/releases/webkitgtk-2.48.2.tar.xz
+RUN tar xf webkitgtk-2.48.2.tar.xz
+WORKDIR /root/webkitgtk-2.48.2
+
+# Bug in webkitgtk
+RUN mkdir -p Tools/glib/dependencies/ && touch Tools/glib/dependencies/apt
+RUN sed -i 's/$(aptIfExists/#$(aptIfExists/g' Tools/gtk/dependencies/apt
+
+RUN ./Tools/gtk/install-dependencies
+
+COPY chall.patch /root/
+RUN patch -p1 < ../chall.patch
+RUN export LDFLAGS="-Wl,-z,relro -Wl,-z,now" && \
+    cmake -DPORT=JSCOnly -DENABLE_STATIC_JSC=1 \
+    -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+    -GNinja && ninja jsc

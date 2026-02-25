@@ -1,0 +1,21 @@
+services:
+  babyjsc:
+    image: babyjsc
+    build: .
+    restart: unless-stopped
+    init: true
+    privileged: true
+    volumes:
+      - './dist/jsc:/home/user/jsc:ro'
+      - './dist/libs:/home/user/libs:ro'
+      - './wrapper.py:/home/user/chall:ro'
+    ports:
+      - '1337:1337'
+    mem_limit: '2048M'
+    environment:
+      - 'FLAG=TeamItaly{fake_flag}'
+      - 'FORWARD_STDERR=true'
+      - 'TEMPDIRS=/tmp'
+      - 'RLIMIT_AS=32768'
+      - 'TIMEOUT=60'
+      - 'POW_BITS=28'
