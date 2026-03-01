@@ -1,0 +1,265 @@
+diff --git a/src/builtins/builtins-array.cc b/src/builtins/builtins-array.cc
+index 22707f30836..07b4007829d 100644
+--- a/src/builtins/builtins-array.cc
++++ b/src/builtins/builtins-array.cc
+@@ -1742,5 +1742,112 @@ BUILTIN(ArrayConcat) {
+   return Slow_ArrayConcat(&args, species, isolate);
+ }
+ 
++BUILTIN(ArrayReloc8) {
++  HandleScope scope(isolate);
++
++  if (args.length() != 3) {
++    THROW_NEW_ERROR_RETURN_FAILURE(
++      isolate, 
++      NewTypeError(
++        MessageTemplate::kPlaceholderOnly,
++        isolate->factory()->NewStringFromAsciiChecked("invalid number of arguments")
++      )
++    );
++  }
++
++  Handle<Object> receiver = args.receiver();
++  if (!IsJSArray(*receiver) || !HasOnlySimpleReceiverElements(isolate, Cast<JSArray>(*receiver))) {
++    THROW_NEW_ERROR_RETURN_FAILURE(
++      isolate, 
++      NewTypeError(
++        MessageTemplate::kPlaceholderOnly,
++        isolate->factory()->NewStringFromAsciiChecked("invalid type")
++      )
++    );
++  }
++
++  Handle<JSArray> array = Cast<JSArray>(receiver);
++
++  uint32_t array_len = Object::NumberValue(array->length());
++
++  auto get_index_arg = [&](uint32_t index) -> Maybe<uint32_t> { // get the argument at index index and convert it to a number, return nothing if it fails
++    Handle<Object> obj;
++    ASSIGN_RETURN_ON_EXCEPTION_VALUE(
++      isolate,
++      obj,
++      Object::ToNumber(isolate, args.at(index)),
++      Nothing<uint32_t>()
++    );
++    return Just(static_cast<uint32_t>(Object::NumberValue(*obj)));
++  };
++  auto get_from_val = [&]() { return get_index_arg(1); };
++  auto get_to_val = [&]() { return get_index_arg(2); };
++
++  #define DECLARE_ARGS() \
++    uint32_t from_val; \
++    if (!get_from_val().To(&from_val)) { //save the FROM value to from_val, throw exception if it fails \ 
++      THROW_NEW_ERROR_RETURN_FAILURE( \
++        isolate, \
++        NewTypeError( \
++          MessageTemplate::kPlaceholderOnly, \
++          isolate->factory()->NewStringFromAsciiChecked("`from` is not a number") \
++        ) \
++      ); \
++    } \
++    \
++    uint32_t to_val; \
++    if (!get_to_val().To(&to_val)) { \
++      THROW_NEW_ERROR_RETURN_FAILURE( \
++        isolate, \
++        NewTypeError( \
++          MessageTemplate::kPlaceholderOnly, \
++          isolate->factory()->NewStringFromAsciiChecked("`to` is not a number") \
++        ) \
++      ); \
++    }
++
++  { // bounds check
++    DECLARE_ARGS();
++
++    if (from_val < 0 || from_val >= array_len) {
++      THROW_NEW_ERROR_RETURN_FAILURE(
++        isolate,
++        NewTypeError(
++          MessageTemplate::kPlaceholderOnly,
++          isolate->factory()->NewStringFromAsciiChecked("invalid from")
++        )
++      );
++    }
++
++    if (to_val < 0 || to_val >= array_len) {
++      THROW_NEW_ERROR_RETURN_FAILURE(
++        isolate,
++        NewTypeError(
++          MessageTemplate::kPlaceholderOnly,
++          isolate->factory()->NewStringFromAsciiChecked("invalid to")
++        )
++      );
++    }
++  }
++  
++  { // no bounds check (already done, maybe we can pass it an object that given an index returns a different value for the first and second call...)
++    DECLARE_ARGS();
++
++    if (IsDoubleElementsKind(array->GetElementsKind())) {
++      Tagged<FixedDoubleArray> elements = Cast<FixedDoubleArray>(array->elements());
++      double value = elements->get_scalar(from_val);
++      elements->set(to_val, value);
++    } else {
++      Tagged<FixedArray> elements = Cast<FixedArray>(array->elements());
++      Handle<Object> value = handle(elements->get(from_val), isolate);
++      elements->set(to_val, *value);
++    }
++  }
++
++  
++  return ReadOnlyRoots(isolate).undefined_value();
++  #undef DECLARE_ARGS
++}
++
+ }  // namespace internal
+ }  // namespace v8
+diff --git a/src/builtins/builtins-definitions.h b/src/builtins/builtins-definitions.h
+index 5577821578e..a4db4b24cd0 100644
+--- a/src/builtins/builtins-definitions.h
++++ b/src/builtins/builtins-definitions.h
+@@ -507,6 +507,7 @@ constexpr int kGearboxGenericBuiltinIdOffset = -2;
+   TFC(ArraySingleArgumentConstructor_HoleyDouble_DisableAllocationSites,       \
+       ArraySingleArgumentConstructor)                                          \
+   TFC(ArrayNArgumentsConstructor, ArrayNArgumentsConstructor)                  \
++  CPP(ArrayReloc8, kDontAdaptArgumentsSentinel)                                                             \
+   CPP(ArrayConcat, kDontAdaptArgumentsSentinel)                                \
+   /* ES6 #sec-array.prototype.fill */                                          \
+   CPP(ArrayPrototypeFill, kDontAdaptArgumentsSentinel)                         \
+diff --git a/src/d8/d8.cc b/src/d8/d8.cc
+index f1fe8c3c45c..572a6b9a154 100644
+--- a/src/d8/d8.cc
++++ b/src/d8/d8.cc
+@@ -4218,51 +4218,51 @@ Local<FunctionTemplate> Shell::CreateNodeTemplates(
+ 
+ Local<ObjectTemplate> Shell::CreateGlobalTemplate(Isolate* isolate) {
+   Local<ObjectTemplate> global_template = ObjectTemplate::New(isolate);
+-  global_template->Set(Symbol::GetToStringTag(isolate),
+-                       String::NewFromUtf8Literal(isolate, "global"));
+-  global_template->Set(isolate, "version",
+-                       FunctionTemplate::New(isolate, Version));
+-
+-  global_template->Set(isolate, "print", FunctionTemplate::New(isolate, Print));
+-  global_template->Set(isolate, "printErr",
+-                       FunctionTemplate::New(isolate, PrintErr));
+-  global_template->Set(isolate, "write",
+-                       FunctionTemplate::New(isolate, WriteStdout));
+-  if (!i::v8_flags.fuzzing) {
+-    global_template->Set(isolate, "writeFile",
+-                         FunctionTemplate::New(isolate, WriteFile));
+-  }
+-  global_template->Set(isolate, "read",
+-                       FunctionTemplate::New(isolate, ReadFile));
+-  global_template->Set(isolate, "readbuffer",
+-                       FunctionTemplate::New(isolate, ReadBuffer));
+-  global_template->Set(isolate, "readline",
+-                       FunctionTemplate::New(isolate, ReadLine));
+-  global_template->Set(isolate, "load",
+-                       FunctionTemplate::New(isolate, ExecuteFile));
+-  global_template->Set(isolate, "setTimeout",
+-                       FunctionTemplate::New(isolate, SetTimeout));
+-  // Some Emscripten-generated code tries to call 'quit', which in turn would
+-  // call C's exit(). This would lead to memory leaks, because there is no way
+-  // we can terminate cleanly then, so we need a way to hide 'quit'.
+-  if (!options.omit_quit) {
+-    global_template->Set(isolate, "quit", FunctionTemplate::New(isolate, Quit));
+-  }
+-  global_template->Set(isolate, "Realm", Shell::CreateRealmTemplate(isolate));
+-  global_template->Set(isolate, "performance",
+-                       Shell::CreatePerformanceTemplate(isolate));
+-  global_template->Set(isolate, "Worker", Shell::CreateWorkerTemplate(isolate));
+-
+-  // Prevent fuzzers from creating side effects.
+-  if (!i::v8_flags.fuzzing) {
+-    global_template->Set(isolate, "os", Shell::CreateOSTemplate(isolate));
+-  }
+-  global_template->Set(isolate, "d8", Shell::CreateD8Template(isolate));
+-
+-  if (i::v8_flags.expose_async_hooks) {
+-    global_template->Set(isolate, "async_hooks",
+-                         Shell::CreateAsyncHookTemplate(isolate));
+-  }
++  // global_template->Set(Symbol::GetToStringTag(isolate),
++  //                      String::NewFromUtf8Literal(isolate, "global"));
++  // global_template->Set(isolate, "version",
++  //                      FunctionTemplate::New(isolate, Version));
++
++  // global_template->Set(isolate, "print", FunctionTemplate::New(isolate, Print));
++  // global_template->Set(isolate, "printErr",
++  //                      FunctionTemplate::New(isolate, PrintErr));
++  // global_template->Set(isolate, "write",
++  //                      FunctionTemplate::New(isolate, WriteStdout));
++  // if (!i::v8_flags.fuzzing) {
++  //   global_template->Set(isolate, "writeFile",
++  //                        FunctionTemplate::New(isolate, WriteFile));
++  // }
++  // global_template->Set(isolate, "read",
++  //                      FunctionTemplate::New(isolate, ReadFile));
++  // global_template->Set(isolate, "readbuffer",
++  //                      FunctionTemplate::New(isolate, ReadBuffer));
++  // global_template->Set(isolate, "readline",
++  //                      FunctionTemplate::New(isolate, ReadLine));
++  // global_template->Set(isolate, "load",
++  //                      FunctionTemplate::New(isolate, ExecuteFile));
++  // global_template->Set(isolate, "setTimeout",
++  //                      FunctionTemplate::New(isolate, SetTimeout));
++  // // Some Emscripten-generated code tries to call 'quit', which in turn would
++  // // call C's exit(). This would lead to memory leaks, because there is no way
++  // // we can terminate cleanly then, so we need a way to hide 'quit'.
++  // if (!options.omit_quit) {
++  //   global_template->Set(isolate, "quit", FunctionTemplate::New(isolate, Quit));
++  // }
++  // global_template->Set(isolate, "Realm", Shell::CreateRealmTemplate(isolate));
++  // global_template->Set(isolate, "performance",
++  //                      Shell::CreatePerformanceTemplate(isolate));
++  // global_template->Set(isolate, "Worker", Shell::CreateWorkerTemplate(isolate));
++
++  // // Prevent fuzzers from creating side effects.
++  // if (!i::v8_flags.fuzzing) {
++  //   global_template->Set(isolate, "os", Shell::CreateOSTemplate(isolate));
++  // }
++  // global_template->Set(isolate, "d8", Shell::CreateD8Template(isolate));
++
++  // if (i::v8_flags.expose_async_hooks) {
++  //   global_template->Set(isolate, "async_hooks",
++  //                        Shell::CreateAsyncHookTemplate(isolate));
++  // }
+ 
+   return global_template;
+ }
+@@ -4642,14 +4642,14 @@ void Shell::Initialize(Isolate* isolate, D8Console* console,
+             v8::Isolate::kMessageLog);
+   }
+ 
+-  isolate->SetHostImportModuleDynamicallyCallback(
+-      Shell::HostImportModuleDynamically);
+-  isolate->SetHostImportModuleWithPhaseDynamicallyCallback(
+-      Shell::HostImportModuleWithPhaseDynamically);
+-  isolate->SetHostInitializeImportMetaObjectCallback(
+-      Shell::HostInitializeImportMetaObject);
+-  isolate->SetHostCreateShadowRealmContextCallback(
+-      Shell::HostCreateShadowRealmContext);
++  // isolate->SetHostImportModuleDynamicallyCallback(
++  //     Shell::HostImportModuleDynamically);
++  // isolate->SetHostImportModuleWithPhaseDynamicallyCallback(
++  //     Shell::HostImportModuleWithPhaseDynamically);
++  // isolate->SetHostInitializeImportMetaObjectCallback(
++  //     Shell::HostInitializeImportMetaObject);
++  // isolate->SetHostCreateShadowRealmContextCallback(
++  //     Shell::HostCreateShadowRealmContext);
+ 
+   debug::SetConsoleDelegate(isolate, console);
+ }
+diff --git a/src/init/bootstrapper.cc b/src/init/bootstrapper.cc
+index 4a8837a7150..73fdcc25383 100644
+--- a/src/init/bootstrapper.cc
++++ b/src/init/bootstrapper.cc
+@@ -2394,6 +2394,7 @@ void Genesis::InitializeGlobal(DirectHandle<JSGlobalObject> global_object,
+     JSObject::AddProperty(isolate_, proto, factory->constructor_string(),
+                           array_function, DONT_ENUM);
+ 
++    SimpleInstallFunction(isolate_, proto, "reloc8", Builtin::kArrayReloc8, 2, kDontAdapt);
+     SimpleInstallFunction(isolate_, proto, "at", Builtin::kArrayPrototypeAt, 1,
+                           kAdapt);
+     SimpleInstallFunction(isolate_, proto, "concat",
