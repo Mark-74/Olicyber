@@ -1,0 +1,2 @@
+https://libc.rip/download/libc6_2.35-0ubuntu3_amd64.so
+
