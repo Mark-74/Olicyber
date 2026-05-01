@@ -1,0 +1,11 @@
+services:
+  hof:
+    build: .
+    restart: unless-stopped
+    init: true
+    privileged: true
+    ports:
+      - '1337:1337'
+    environment:
+      - 'FLAG=TRX{REDACTED}'
+      - 'TIMEOUT=60'
