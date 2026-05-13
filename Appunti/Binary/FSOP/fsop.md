@@ -8,6 +8,7 @@ There are many ways to perform an fsop, the modern and most reliable way is to u
 
 ## How it works
 ```python
+// final exploit code
 fs = FileStructure()
 fs.flags = b' sh\0\0\0\0\0'
 fs._lock = libc.sym._IO_stdfile_1_lock
@@ -136,7 +137,7 @@ _IO_wfile_overflow (FILE *f, wint_t wch)
 	}
     // continues...
 ```
-``__doallocate`` is called if the stream is not yet in writing ("putting") mode or if ``_IO_write_base`` is ``NULL``. So, if we overwrite the ``_IO_write_base`` with ``NULL`` and then call ``__overflow``, ``__doallocate`` will be called indirectly. But since we want to use the ``_wide_vtable``, we'll also have to trigger its ``__overflow`` function, not the standard one.
+``__doallocate`` is called if the stream is not yet in writing ("putting") mode or if ``_IO_write_base`` is ``NULL``. So, if we overwrite the ``_IO_write_base`` with ``NULL`` and then call ``__overflow``, ``__doallocate`` will be called indirectly (pwntools zeroes this values by default, so don't worry if you don't see this in the exploit). But since we want to use the ``_wide_vtable``, we'll also have to trigger its ``__overflow`` function, not the standard one.
 
 To achieve this, we'll overwrite the ``vtable`` pointer in the ``_IO_FILE_plus`` struct with the ``_wide_vtable`` minus an offset. The offset will have to be the one from ``__overflow`` (at 0x18) to ``__xsputn`` (at 0x38), which is **0x20**. ``__xsputn`` is called every time an IO function prints something to this stream, so by writing ``_IO_wfile_jumps - 0x20`` to the ``vtable`` address, when a standard characted (non unicode aka wide) is printed, ``__overflow`` gets called instead of ``__xsputn``, thus triggering ``__doallocate`` which is actually ``system``.
 
