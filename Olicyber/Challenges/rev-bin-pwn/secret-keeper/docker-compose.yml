@@ -1,0 +1,18 @@
+services:
+  secret-keeper:
+    image: cache.ecsc2024.it/cybersecnatlab/challenge-jail@sha256:c6ca5b83f35e1c3bc63b08db1ceecd8d10e4a1a46d4f24ee45e9f12bdbac990b
+    restart: unless-stopped
+    init: true
+    privileged: true
+    volumes:
+      - './secret-keeper:/home/user/chall:ro'
+      - './glibc/ld-linux-x86-64.so.2:/home/user/ld-linux.so:ro'
+      - './glibc/:/home/user/libs:ro'
+    ports:
+      - '47014:1337'
+    environment:
+      - 'FLAG=ECSC{redacted}'
+      - 'FLAG_IN_ENV=true'
+      - 'SET_INTERPRETER=/home/user/ld-linux.so'
+      - 'SET_RPATH=/home/user/libs'
+      - 'TIMEOUT=120'
